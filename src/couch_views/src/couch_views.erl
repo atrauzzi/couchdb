@@ -12,8 +12,14 @@
 
 -module(couch_views).
 
+
+-behavior(couch_views_indices).
+
+
 -export([
-    query/6
+    query/6,
+    register_index/0,
+    build_indices/2
 ]).
 
 
@@ -53,6 +59,18 @@ query(Db, DDoc, ViewName, Callback, Acc0, Args0) ->
         couch_views_jobs:build_view(Db, Mrst, WaitSeq),
         read_view(Db, Mrst, ViewName, Callback, Acc0, Args3)
     end.
+
+
+register_index() ->
+    couch_view_indices:register_index(?MODULE).
+
+
+build_indices(#{} = Db, DDocs) when is_list(DDocs) ->
+    lists:map(fun(DDoc) ->
+        DbName = fabric2_db:name(Db),
+        {ok, #mrst{} = Mrst} = couch_views_util:ddoc_to_mrst(DbName, DDoc),
+        couch_view_jobs:build_view_async(Db, Mrst)
+    end).
 
 
 read_view(Db, Mrst, ViewName, Callback, Acc0, Args) ->

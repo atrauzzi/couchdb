@@ -225,6 +225,10 @@ resubmit(#{jtx := true} = JTx0, #{job := true} = Job, NewSTime) ->
                         data => Data
                     },
                     {ok, Job1};
+                pending when STime == OldSTime ->
+                    % If pending and we don't actually update the scheduled
+                    % time avoid generating useless db writes.
+                    {ok, Job};
                 pending ->
                     JV1 = JV#jv{seq = ?PENDING_SEQ, stime = STime},
                     set_job_val(Tx, Key, JV1),

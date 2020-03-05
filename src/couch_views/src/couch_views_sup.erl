@@ -36,13 +36,19 @@ start_link() ->
 
 
 init(normal) ->
+    couch_views:register_index(),
     Children = [
         #{
             id => couch_views_server,
             start => {couch_views_server, start_link, []}
+        },
+        #{
+            id => couch_views_updater,
+            start => {couch_views_updater, start_link, []}
         }
     ],
-    {ok, {flags(), Children}};
+    {ok, {flags(), couch_epi:register(couch_view_epi, Children)}};
+
 
 init(builds_disabled) ->
     couch_log:notice("~p : view_indexing disabled", [?MODULE]),
